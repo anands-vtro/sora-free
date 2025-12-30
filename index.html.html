@@ -1,0 +1,221 @@
+<!DOCTYPE html>
+<html lang="id">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Advanced Sora 3-Style Video Generator</title>
+    <style>
+        body {
+            font-family: 'Segoe UI', sans-serif;
+            background: linear-gradient(135deg, #0f0f23, #1a1a2e);
+            color: white;
+            margin: 0;
+            padding: 20px;
+            text-align: center;
+        }
+        .container {
+            max-width: 1000px;
+            margin: 0 auto;
+            background: rgba(255, 255, 255, 0.05);
+            padding: 40px;
+            border-radius: 20px;
+            box-shadow: 0 10px 40px rgba(0, 0, 0, 0.5);
+            backdrop-filter: blur(15px);
+        }
+        h1 {
+            font-size: 3em;
+            margin-bottom: 10px;
+            text-shadow: 0 0 20px #00d4ff;
+        }
+        p {
+            font-size: 1.2em;
+            margin-bottom: 30px;
+        }
+        .input-group {
+            display: flex;
+            justify-content: center;
+            margin: 20px 0;
+        }
+        input[type="text"] {
+            width: 50%;
+            padding: 15px;
+            border: none;
+            border-radius: 25px 0 0 25px;
+            outline: none;
+            font-size: 1em;
+            background: rgba(255, 255, 255, 0.2);
+            color: white;
+        }
+        input::placeholder {
+            color: #ccc;
+        }
+        button {
+            padding: 15px 30px;
+            background: linear-gradient(45deg, #00d4ff, #0099cc);
+            color: white;
+            border: none;
+            border-radius: 0 25px 25px 0;
+            cursor: pointer;
+            font-size: 1em;
+            transition: all 0.3s;
+        }
+        button:hover {
+            transform: scale(1.05);
+            box-shadow: 0 0 20px #00d4ff;
+        }
+        .loading {
+            display: none;
+            margin: 20px 0;
+            font-size: 1.3em;
+            color: #ffeb3b;
+            animation: pulse 1s infinite;
+        }
+        @keyframes pulse {
+            0% { opacity: 1; }
+            50% { opacity: 0.5; }
+            100% { opacity: 1; }
+        }
+        .counter {
+            font-size: 1.1em;
+            margin: 10px 0;
+        }
+        .video-grid {
+            display: grid;
+            grid-template-columns: repeat(auto-fill, minmax(350px, 1fr));
+            gap: 20px;
+            margin-top: 40px;
+        }
+        .video-item {
+            background: rgba(255, 255, 255, 0.1);
+            padding: 15px;
+            border-radius: 15px;
+            text-align: left;
+            transition: transform 0.3s;
+        }
+        .video-item:hover {
+            transform: translateY(-5px);
+        }
+        video {
+            width: 100%;
+            border-radius: 10px;
+            margin-bottom: 10px;
+        }
+        .prompt-text {
+            font-size: 0.9em;
+            color: #ddd;
+            margin-bottom: 10px;
+        }
+        .download-btn {
+            padding: 8px 15px;
+            background: #28a745;
+            color: white;
+            border: none;
+            border-radius: 5px;
+            cursor: pointer;
+            font-size: 0.9em;
+        }
+        .download-btn:hover {
+            background: #218838;
+        }
+        .warning {
+            font-size: 0.8em;
+            color: #ff6b6b;
+            margin-top: 20px;
+        }
+    </style>
+</head>
+<body>
+    <div class="container">
+        <h1>Advanced Sora 3-Style Video Generator</h1>
+        <p>Generate video super realistik tak terbatas. Hasilnya bisa bikin orang bingung—apakah asli atau AI? Gunakan dengan bijak!</p>
+        <div class="input-group">
+            <input type="text" id="prompt" placeholder="Prompt: Orang berjalan di hutan hujan, super detail dan realistik">
+            <button onclick="generateVideo()">Generate Real Video</button>
+        </div>
+        <div class="loading" id="loading">AI Processing... Generating hyper-realistic video (bisa makan waktu 10-30 detik)</div>
+        <div class="counter">Total Videos Generated: <span id="count">0</span></div>
+        <div class="video-grid" id="videoGrid"></div>
+        <div class="warning">⚠️ Peringatan: Video AI bisa terlihat sangat nyata. Jangan gunakan untuk deepfakes berbahaya atau penipuan.</div>
+    </div>
+
+    <script>
+        let videoCount = 0;
+        const videoGrid = document.getElementById('videoGrid');
+        const countDisplay = document.getElementById('count');
+        const loading = document.getElementById('loading');
+
+        async function generateVideo() {
+            const prompt = document.getElementById('prompt').value;
+            if (!prompt) {
+                alert('Masukkan prompt yang detail untuk hasil realistik!');
+                return;
+            }
+
+            loading.style.display = 'block';
+
+            try {
+                // Integrasi API Hugging Face untuk video generation (gunakan model seperti stabilityai/stable-video-diffusion)
+                // Ganti 'YOUR_HUGGINGFACE_API_TOKEN' dengan token Anda dari huggingface.co
+                const response = await fetch('https://api-inference.huggingface.co/models/stabilityai/stable-video-diffusion', {
+                    method: 'POST',
+                    headers: {
+                        'Authorization': `Bearer YOUR_HUGGINGFACE_API_TOKEN`,
+                        'Content-Type': 'application/json'
+                    },
+                    body: JSON.stringify({
+                        inputs: prompt,
+                        options: { wait_for_model: true }  // Tunggu model load
+                    })
+                });
+
+                if (!response.ok) {
+                    throw new Error('API Error: ' + response.statusText);
+                }
+
+                const data = await response.blob();  // Video sebagai blob
+                const videoUrl = URL.createObjectURL(data);  // Buat URL untuk video
+
+                loading.style.display = 'none';
+                videoCount++;
+                countDisplay.textContent = videoCount;
+
+                // Buat item video baru
+                const videoItem = document.createElement('div');
+                videoItem.className = 'video-item';
+                videoItem.innerHTML = `<div class="prompt-text">Prompt: "${prompt}"</div>`;
+
+                const videoElement = document.createElement('video');
+                videoElement.src = videoUrl;
+                videoElement.controls = true;
+                videoElement.autoplay = false;
+                videoItem.appendChild(videoElement);
+
+                // Tombol download
+                const downloadBtn = document.createElement('button');
+                downloadBtn.className = 'download-btn';
+                downloadBtn.textContent = 'Download Video';
+                downloadBtn.onclick = () => {
+                    const a = document.createElement('a');
+                    a.href = videoUrl;
+                    a.download = `generated-video-${videoCount}.mp4`;
+                    a.click();
+                };
+                videoItem.appendChild(downloadBtn);
+
+                videoGrid.appendChild(videoItem);
+            } catch (error) {
+                loading.style.display = 'none';
+                console.error('Error generating video:', error);
+                alert('Gagal generate video. Periksa API token atau coba lagi. (Fallback: Simulasi)');
+                // Fallback simulasi jika API gagal
+                videoCount++;
+                countDisplay.textContent = videoCount;
+                const videoItem = document.createElement('div');
+                videoItem.className = 'video-item';
+                videoItem.innerHTML = `<div class="prompt-text">Prompt: "${prompt}"</div><p>Simulasi: Video realistik tidak bisa dimuat. (Gunakan API untuk hasil nyata)</p>`;
+                videoGrid.appendChild(videoItem);
+            }
+        }
+    </script>
+</body>
+</html>
